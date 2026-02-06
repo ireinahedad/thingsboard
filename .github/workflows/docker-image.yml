@@ -1,0 +1,48 @@
+name: CI ThingsBoard
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+      - test
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:24.0.2
+        options: --privileged
+        ports:
+          - 8080:8080
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build and run unit tests
+        run: mvn clean install
+
+      - name: Launch ThingsBoard
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          docker-compose up -d
+
+      - name: Check ThingsBoard
+        run: |
+          echo "Waiting for ThingsBoard to start..."
+          sleep 30
+          curl -f http://localhost:8080 || exit 1
