@@ -10,6 +10,7 @@ on:
       - main
       - develop
       - test
+      - ireinahedad-patch-1
   workflow_dispatch:
 
 jobs:
