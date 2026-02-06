@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.transport.TransportContext;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.io.IOException;
@@ -78,5 +79,42 @@ class DeviceApiControllerTest {
         callback.onError(new IOException("not found"));
 
         callback.onError(new RuntimeException("oops it is run time error"));
+    }
+
+//TEST FOR NEW FUNCTIONALITY
+
+    @Test
+    void getServerTimeTest() {
+        // Arrange
+        TransportContext transportContext = Mockito.mock(TransportContext.class);
+        DeviceApiController controller = new DeviceApiController();
+        controller.transportContext = transportContext;
+
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+        String deviceToken = "validToken";
+
+        // Mock transport service and callback
+        Mockito.doAnswer(invocation -> {
+            TransportServiceCallback<TransportProtos.ValidateDeviceCredentialsResponse> callback =
+                    invocation.getArgument(1);
+            // Simulate success with device info
+            TransportProtos.ValidateDeviceCredentialsResponse response =
+                    TransportProtos.ValidateDeviceCredentialsResponse.newBuilder()
+                            .setDeviceInfo(TransportProtos.DeviceInfoProto.newBuilder().setDeviceIdMSB(1L).setDeviceIdLSB(2L).build())
+                            .build();
+            callback.onSuccess(response);
+            return null;
+        }).when(transportContext).getTransportService();
+
+        // Act
+        DeferredResult<ResponseEntity> result = controller.getServerTime(deviceToken);
+
+        // Assert
+        result.onCompletion(() -> {
+            ResponseEntity entity = (ResponseEntity) result.getResult();
+            assert entity.getStatusCode().is2xxSuccessful();
+            String body = entity.getBody().toString();
+            assert body.contains("serverTime"); // JSON contains serverTime
+        });
     }
 }

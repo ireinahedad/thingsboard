@@ -170,6 +170,34 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
+
+//NEW FONCTIONALITY
+
+    @Operation(summary = "Get server time",
+            description = "Returns the current server time in milliseconds. " +
+                            REQUIRE_ACCESS_TOKEN)
+    @RequestMapping(value = "/{deviceToken}/time", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    public DeferredResult<ResponseEntity> getServerTime(
+            @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true)
+            @PathVariable("deviceToken") String deviceToken) {
+
+        DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
+
+        transportContext.getTransportService().process(
+            DeviceTransportType.DEFAULT,
+            ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
+            new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
+                long currentTime = System.currentTimeMillis();
+                JsonObject response = new JsonObject();
+                response.addProperty("serverTime", currentTime);
+                responseWriter.setResult(new ResponseEntity<>(response.toString(), HttpStatus.OK));
+            })
+        );
+
+        return responseWriter;
+    }
+
+
     @Operation(summary = "Post attributes (postDeviceAttributes)",
             description = "Post client attribute updates on behalf of device. "
                     + "\n Example of the request: "
