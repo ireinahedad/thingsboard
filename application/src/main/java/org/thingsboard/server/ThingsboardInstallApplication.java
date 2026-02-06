@@ -21,7 +21,6 @@ import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.thingsboard.server.install.ThingsboardInstallService;
-
 import java.util.Arrays;
 
 @Slf4j
