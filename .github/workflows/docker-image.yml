@@ -58,7 +58,7 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh
-          docker compose -f docker-image.yml up -d
+          docker compose -f .github/workflows/docker-image.yml up -d
 
       - name: Check ThingsBoard
         run: |
