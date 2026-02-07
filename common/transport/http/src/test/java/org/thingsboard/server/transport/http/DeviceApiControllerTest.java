@@ -17,14 +17,19 @@ package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -83,23 +88,42 @@ class DeviceApiControllerTest {
     }
 
 //TEST FOR NEW FUNCTIONALITY
-/*   @Test
-    void getServerTimeTest() {
-        // Mock HttpTransportContext
-        HttpTransportContext transportContext = Mockito.mock(HttpTransportContext.class);
 
-        DeviceApiController controller = new DeviceApiController();
-        controller.setTransportContext(transportContext); // use setter
+    // TEST FOR NEW FUNCTIONALITY
+@Test
+void getServerTimeCallbackTest() {
+    // Mock des objets nécessaires
+    var transportContext = Mockito.mock(org.thingsboard.server.transport.http.HttpTransportContext.class);
+    var transportService = Mockito.mock(org.thingsboard.server.common.transport.TransportService.class);
+    when(transportContext.getTransportService()).thenReturn(transportService);
+    when(transportContext.getDefaultTimeout()).thenReturn(1000L);
 
-        String deviceToken = "validToken";
-        DeferredResult<ResponseEntity> result = controller.getServerTime(deviceToken);
+    var controller = new DeviceApiController();
+    controller.transportContext = transportContext;
 
-        // Mock ValidateDeviceCredentialsResponse
-        ValidateDeviceCredentialsResponse mockResponse = Mockito.mock(ValidateDeviceCredentialsResponse.class);
-        Mockito.when(mockResponse.hasDeviceInfo()).thenReturn(true);
+    DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+    String deviceToken = "validToken";
 
-    
-    
-    }
-    */
+    // Appel de la méthode getServerTime
+    DeferredResult<ResponseEntity> result = controller.getServerTime(deviceToken);
+
+    // Capturer le callback passé à process() pour simuler une authentification réussie
+    ArgumentCaptor<Consumer<TransportProtos.SessionInfoProto>> captor = ArgumentCaptor.forClass(Consumer.class);
+    Mockito.verify(transportService).process(
+            eq(DeviceTransportType.DEFAULT),
+            eq(TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build()),
+            captor.capture()
+    );
+
+    // Simuler l'authentification réussie
+    Consumer<TransportProtos.SessionInfoProto> successCallback = captor.getValue();
+    successCallback.accept(Mockito.mock(TransportProtos.SessionInfoProto.class));
+
+    // Simuler les différents types d'erreurs comme dans les autres tests
+    var deviceAuthCallback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, x -> {});
+    deviceAuthCallback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+    deviceAuthCallback.onError(new com.google.gson.JsonParseException("Json ; expected"));
+    deviceAuthCallback.onError(new IOException("not found"));
+    deviceAuthCallback.onError(new RuntimeException("oops it is run time error"));
+}
 }
