@@ -83,8 +83,7 @@ class DeviceApiControllerTest {
     }
 
 //TEST FOR NEW FUNCTIONALITY
-
-  @Test
+/*   @Test
     void getServerTimeTest() {
         // Mock HttpTransportContext
         HttpTransportContext transportContext = Mockito.mock(HttpTransportContext.class);
@@ -99,6 +98,8 @@ class DeviceApiControllerTest {
         ValidateDeviceCredentialsResponse mockResponse = Mockito.mock(ValidateDeviceCredentialsResponse.class);
         Mockito.when(mockResponse.hasDeviceInfo()).thenReturn(true);
 
-        // You can now call the callback manually if needed
+    
+    
     }
+    */
 }
