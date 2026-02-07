@@ -54,7 +54,6 @@ jobs:
           mvn clean install -pl common,common/transport,transport/mqtt,transport/http -am
 
       - name: Launch ThingsBoard
-        working-directory: ${{ github.workspace }}
         run: |
           chmod +x build.sh
           ./build.sh
