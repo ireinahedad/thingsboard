@@ -27,6 +27,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -89,38 +90,40 @@ class DeviceApiControllerTest {
 
 //TEST FOR NEW FUNCTIONALITY
 
-    // TEST FOR NEW FUNCTIONALITY
 @Test
-void getServerTimeCallbackTest() {
-    // Mock des objets nécessaires
+void getServerTimeCallbackTest() throws Exception {
+    // Mock des objets
     var transportContext = Mockito.mock(org.thingsboard.server.transport.http.HttpTransportContext.class);
     var transportService = Mockito.mock(org.thingsboard.server.common.transport.TransportService.class);
     when(transportContext.getTransportService()).thenReturn(transportService);
     when(transportContext.getDefaultTimeout()).thenReturn(1000L);
 
     var controller = new DeviceApiController();
-    controller.transportContext = transportContext;
 
-    DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+    // Injecter le mock dans le champ privé avec reflection
+    java.lang.reflect.Field field = DeviceApiController.class.getDeclaredField("transportContext");
+    field.setAccessible(true);
+    field.set(controller, transportContext);
+
     String deviceToken = "validToken";
-
-    // Appel de la méthode getServerTime
     DeferredResult<ResponseEntity> result = controller.getServerTime(deviceToken);
 
-    // Capturer le callback passé à process() pour simuler une authentification réussie
-    ArgumentCaptor<Consumer<TransportProtos.SessionInfoProto>> captor = ArgumentCaptor.forClass(Consumer.class);
-    Mockito.verify(transportService).process(
+    // Capturer le TransportServiceCallback passé à process()
+    ArgumentCaptor<org.thingsboard.server.common.transport.TransportServiceCallback> captor =
+            ArgumentCaptor.forClass(org.thingsboard.server.common.transport.TransportServiceCallback.class);
+
+    verify(transportService).process(
             eq(DeviceTransportType.DEFAULT),
-            eq(TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build()),
+            any(ValidateDeviceTokenRequestMsg.class),
             captor.capture()
     );
 
-    // Simuler l'authentification réussie
-    Consumer<TransportProtos.SessionInfoProto> successCallback = captor.getValue();
-    successCallback.accept(Mockito.mock(TransportProtos.SessionInfoProto.class));
+    // Simuler l'appel réussi du callback
+    var callback = captor.getValue();
+    callback.onSuccess(Mockito.mock(org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto.class));
 
-    // Simuler les différents types d'erreurs comme dans les autres tests
-    var deviceAuthCallback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, x -> {});
+    // Simuler différentes erreurs comme dans les autres tests
+    var deviceAuthCallback = new DeviceApiController.DeviceAuthCallback(transportContext, Mockito.mock(DeferredResult.class), x -> {});
     deviceAuthCallback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
     deviceAuthCallback.onError(new com.google.gson.JsonParseException("Json ; expected"));
     deviceAuthCallback.onError(new IOException("not found"));
