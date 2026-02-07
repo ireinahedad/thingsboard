@@ -51,7 +51,7 @@ jobs:
 
       - name: Build and run selected modules
         run: |
-          mvn clean install -pl server/commons,server/transport/common,transport/mqtt/common,transport/http -am
+          mvn clean install -pl common,common/transport,transport/mqtt,transport/http -am
 
       - name: Launch ThingsBoard
         run: |
