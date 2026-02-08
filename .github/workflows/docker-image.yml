@@ -19,11 +19,12 @@ name: CI ThingsBoard
 on:
   push:
     branches:
-      - master
+      - main
       - ireinahedad-patch-1
   pull_request:
     branches:
-      - master
+      - main
+      - develop
       - ireinahedad-patch-1
     
   workflow_dispatch:
@@ -48,33 +49,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - run: ls docker
 
+      - name: Build and run selected modules
+        run: |
+          mvn clean install -pl common,common/transport,transport/mqtt,transport/http -am
 
-      
+      - name: Launch ThingsBoard
+        run: |
+          chmod +x build.sh
+          ./build.sh
+          
+          docker compose -f docker/docker-compose.yml up -d
 
-      - name: Wait for ThingsBoard to start
+      - name: Check ThingsBoard
         run: |
           echo "Waiting for ThingsBoard to start..."
-          # on récupère l'ID du conteneur tb-core1
-          CONTAINER_ID=$(docker compose -f docker/docker-compose.yml ps -q tb-core1)
-          if [ -z "$CONTAINER_ID" ]; then
-            echo "tb-core1 container not found"
-            docker compose -f docker/docker-compose.yml ps
-            exit 1
-          fi
+          sleep 300
+          curl -f http://localhost:8080 || exit 1
 
-          # boucle jusqu'à 10 minutes
-          for i in {1..60}; do
-            # grep sur la ligne qui indique que ThingsBoard est prêt
-            if docker compose -f docker/docker-compose.yml logs tb-core1 | grep -q "Started ThingsBoardApplication"; then
-              echo "ThingsBoard is ready!"
-              curl -f http://localhost:8080 || echo "HTTP test failed, but container is up"
-              exit 0
-            fi
-            echo "Still starting... ($i)"
-            sleep 10
-          done
-
-          echo "ThingsBoard did not start in time"
-          docker compose -f docker/docker-compose.yml logs --tail=100
-          exit 1
+          
