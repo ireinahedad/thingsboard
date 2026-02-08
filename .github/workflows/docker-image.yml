@@ -19,12 +19,11 @@ name: CI ThingsBoard
 on:
   push:
     branches:
-      - main
+      - master
       - ireinahedad-patch-1
   pull_request:
     branches:
-      - main
-      - develop
+      - master
       - ireinahedad-patch-1
     
   workflow_dispatch:
@@ -64,6 +63,18 @@ jobs:
 
       - name: Check ThingsBoard
         run: |
-          echo "Waiting for ThingsBoard to start..."
-          sleep 300
-          curl -f http://localhost:8080 || exit 1
+            echo "Waiting for ThingsBoard container to become healthy..."
+            for i in {1..60}; do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' tb-core1)
+              echo "Status: $STATUS"
+              if [ "$STATUS" = "healthy" ]; then
+                echo "ThingsBoard is ready!"
+                curl -f http://localhost:8080
+                exit 0
+              fi
+              sleep 10
+            done
+            echo "ThingsBoard did not become healthy in time"
+            docker ps
+            docker compose -f docker/docker-compose.yml logs --tail=100
+            exit 1

@@ -35,7 +35,8 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
-    - "8080:8080"
+    - "8080"
+    - "7070"
     logging:
       driver: "json-file"
       options:
@@ -60,7 +61,8 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${TB_NODE_DOCKER_NAME}:${TB_VERSION}"
     ports:
-      - "8082:8080"
+      - "8080"
+      - "7070"
     logging:
       driver: "json-file"
       options:
@@ -249,14 +251,14 @@ services:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
-    - "8081:8080"
+    - "8080"
     env_file:
       - tb-web-ui.env
   tb-web-ui2:
     restart: always
     image: "${DOCKER_REPO}/${WEB_UI_DOCKER_NAME}:${TB_VERSION}"
     ports:
-      - "8083:8080"
+      - "8080"
     env_file:
       - tb-web-ui.env
   tb-vc-executor1:
