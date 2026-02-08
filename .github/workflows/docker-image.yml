@@ -55,7 +55,18 @@ jobs:
       - name: Check ThingsBoard
         run: |
           echo "Waiting for ThingsBoard to start..."
-          sleep 300
-          curl -f http://localhost:8080 || exit 1
+          TIMEOUT=300   # Maximum wait time in seconds (5 minutes)
+          INTERVAL=10   # Check every 10 seconds
+          ELAPSED=0
 
-          
+          while ! curl -fs http://localhost:8080 > /dev/null; do
+            if [ $ELAPSED -ge $TIMEOUT ]; then
+              echo "ThingsBoard did not start within $TIMEOUT seconds."
+              exit 1
+            fi
+            echo "Still waiting... ($ELAPSED/$TIMEOUT seconds)"
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          echo "ThingsBoard is up and running!"
