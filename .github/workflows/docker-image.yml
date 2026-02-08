@@ -65,5 +65,5 @@ jobs:
       - name: Check ThingsBoard
         run: |
           echo "Waiting for ThingsBoard to start..."
-          sleep 30
+          sleep 300
           curl -f http://localhost:8080 || exit 1
