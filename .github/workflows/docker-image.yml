@@ -62,7 +62,7 @@ jobs:
           
           docker compose -f docker/docker-compose.yml up -d
 
-      - name: Check ThingsBoard
+      - name: Check  ThingsBoard
         run: |
           echo "Waiting for ThingsBoard to start..."
           TIMEOUT=300   # Maximum wait time in seconds (5 minutes)
