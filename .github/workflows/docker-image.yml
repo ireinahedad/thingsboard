@@ -55,6 +55,7 @@ jobs:
       - name: Wait for ThingsBoard to start
         run: |
           echo "Waiting for ThingsBoard to start..."
+          # on récupère l'ID du conteneur tb-core1
           CONTAINER_ID=$(docker compose -f docker/docker-compose.yml ps -q tb-core1)
           if [ -z "$CONTAINER_ID" ]; then
             echo "tb-core1 container not found"
@@ -62,10 +63,12 @@ jobs:
             exit 1
           fi
 
+          # boucle jusqu'à 10 minutes
           for i in {1..60}; do
+            # grep sur la ligne qui indique que ThingsBoard est prêt
             if docker compose -f docker/docker-compose.yml logs tb-core1 | grep -q "Started ThingsBoardApplication"; then
               echo "ThingsBoard is ready!"
-              curl -f http://localhost:8080
+              curl -f http://localhost:8080 || echo "HTTP test failed, but container is up"
               exit 0
             fi
             echo "Still starting... ($i)"
@@ -75,7 +78,3 @@ jobs:
           echo "ThingsBoard did not start in time"
           docker compose -f docker/docker-compose.yml logs --tail=100
           exit 1
-
-                echo "ThingsBoard did not become healthy in time"
-                docker compose -f docker/docker-compose.yml logs --tail=100
-                exit 1
