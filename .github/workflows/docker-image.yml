@@ -62,26 +62,26 @@ jobs:
           docker compose -f docker/docker-compose.yml up -d
 
       - name: Check ThingsBoard
-      run: |
-        echo "Waiting for ThingsBoard container to become healthy..."
-        CONTAINER_ID=$(docker compose -f docker/docker-compose.yml ps -q tb-core1)
-        if [ -z "$CONTAINER_ID" ]; then
-          echo "tb-core1 container not found"
-          docker compose -f docker/docker-compose.yml ps
-          exit 1
-        fi
-
-        for i in {1..60}; do
-          STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID)
-          echo "Status: $STATUS"
-          if [ "$STATUS" = "healthy" ]; then
-            echo "ThingsBoard is ready!"
-            curl -f http://localhost:8080
-            exit 0
+        run: |
+          echo "Waiting for ThingsBoard container to become healthy..."
+          CONTAINER_ID=$(docker compose -f docker/docker-compose.yml ps -q tb-core1)
+          if [ -z "$CONTAINER_ID" ]; then
+            echo "tb-core1 container not found"
+            docker compose -f docker/docker-compose.yml ps
+            exit 1
           fi
-          sleep 10
-        done
 
-        echo "ThingsBoard did not become healthy in time"
-        docker compose -f docker/docker-compose.yml logs --tail=100
-        exit 1
+          for i in {1..60}; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID)
+            echo "Status: $STATUS"
+            if [ "$STATUS" = "healthy" ]; then
+              echo "ThingsBoard is ready!"
+              curl -f http://localhost:8080
+              exit 0
+            fi
+            sleep 10
+          done
+
+          echo "ThingsBoard did not become healthy in time"
+          docker compose -f docker/docker-compose.yml logs --tail=100
+          exit 1
