@@ -49,6 +49,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - run: ls docker
+
       - name: Build and run selected modules
         run: |
           mvn clean install -pl common,common/transport,transport/mqtt,transport/http -am
@@ -57,6 +59,7 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh
+          
           docker compose -f .github/workflows/docker-image.yml up -d
 
       - name: Check ThingsBoard

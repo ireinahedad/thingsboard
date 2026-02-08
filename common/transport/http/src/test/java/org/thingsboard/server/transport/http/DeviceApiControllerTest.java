@@ -95,7 +95,7 @@ void getServerTimeDeviceAuthCallbackTest() {
     var transportContext = Mockito.mock(org.thingsboard.server.transport.http.HttpTransportContext.class);
     DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
 
-    // Création du callback comme dans la méthode /time
+
     Consumer<TransportProtos.SessionInfoProto> onSuccess = sessionInfo -> {
         long currentTime = System.currentTimeMillis();
         com.google.gson.JsonObject response = new com.google.gson.JsonObject();
@@ -105,13 +105,10 @@ void getServerTimeDeviceAuthCallbackTest() {
 
     var callback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, onSuccess);
 
-    // Simuler les différentes erreurs
+   
     callback.onError(new org.springframework.http.converter.HttpMessageNotReadableException("JSON incorrect syntax"));
     callback.onError(new com.google.gson.JsonParseException("Json ; expected"));
     callback.onError(new java.io.IOException("not found"));
     callback.onError(new RuntimeException("oops it is run time error"));
-
-    // Note : ici on ne teste pas la partie "onSuccess" du vrai DeviceAuthCallback
-    // car elle attend un ValidateDeviceCredentialsResponse, donc ce serait fragile dans un test unitaire
 }
 }
